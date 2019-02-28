@@ -138,7 +138,7 @@ class LogoutAPI(MethodView):
     """
     Logout Resource
     """
-    def post(self):
+    def get(self):
         # get auth token
         auth_header = request.headers.get('Authorization')
         if auth_header:
@@ -177,12 +177,24 @@ class LogoutAPI(MethodView):
                 'message': 'Provide a valid auth token.'
             }
             return make_response(jsonify(responseObject)), 403
+class WelcomeAPI(MethodView):
+    """
+    Welcome Resource
+    """
+    def post(self):
+        # get auth token
+        responseObject = {
+                        'status': 'success',
+                        'message': 'API is currently up. Check out https://github.com/Tehsurfer/Blackfynn-Backend-Connector/ for more details.'
+                    }
+        return make_response(jsonify(responseObject)), 200
 
 # define the API resources
 registration_view = RegisterAPI.as_view('register_api')
 login_view = LoginAPI.as_view('login_api')
 user_view = UserAPI.as_view('user_api')
 logout_view = LogoutAPI.as_view('logout_api')
+api_welcome_view = WelcomeAPI.as_view('welcome_api')
 
 # add Rules for API Endpoints
 auth_blueprint.add_url_rule(
@@ -204,4 +216,10 @@ auth_blueprint.add_url_rule(
     '/auth/logout',
     view_func=logout_view,
     methods=['POST']
+)
+
+auth_blueprint.add_url_rule(
+    '/',
+    view_func=api_welcome_view,
+    methods=['get']
 )
