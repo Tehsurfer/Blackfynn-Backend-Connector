@@ -132,6 +132,51 @@ class UserAPI(MethodView):
                 'message': 'Provide a valid auth token.'
             }
             return make_response(jsonify(responseObject)), 401
+        
+class CheckAuthAPI(MethodView):
+    """
+    User Resource
+    """
+    def post(self):
+        # get the auth token
+        post_data = request.get_json()
+        if post_data.get('Authorization'):
+            try:
+                auth_token = post_data.get('Authorization').split(" ")[1]
+            except IndexError:
+                responseObject = {
+                    'status': 'fail',
+                    'message': 'Bearer token malformed.'
+                }
+                return make_response(jsonify(responseObject)), 401
+        else:
+            auth_token = ''
+        if auth_token:
+            resp = User.decode_auth_token(auth_token)
+            if not isinstance(resp, str):
+                user = User.query.filter_by(id=resp).first()
+                responseObject = {
+                    'status': 'success',
+                    'data': {
+                        'user_id': user.id,
+                        'email': user.email,
+                        'admin': user.admin,
+                        'registered_on': user.registered_on
+                    }
+                }
+                return make_response(jsonify(responseObject)), 200
+            responseObject = {
+                'status': 'fail',
+                'message': resp
+            }
+            return make_response(jsonify(responseObject)), 401
+        else:
+            responseObject = {
+                'status': 'fail',
+                'message': 'Provide a valid auth token.'
+            }
+            return make_response(jsonify(responseObject)), 401
+
 
 
 class LogoutAPI(MethodView):
@@ -195,6 +240,7 @@ login_view = LoginAPI.as_view('login_api')
 user_view = UserAPI.as_view('user_api')
 logout_view = LogoutAPI.as_view('logout_api')
 api_welcome_view = WelcomeAPI.as_view('welcome_api')
+check_auth = CheckAuthAPI.as_view('check_auth_api')
 
 # add Rules for API Endpoints
 auth_blueprint.add_url_rule(
@@ -215,6 +261,11 @@ auth_blueprint.add_url_rule(
 auth_blueprint.add_url_rule(
     '/auth/logout',
     view_func=logout_view,
+    methods=['POST']
+)
+auth_blueprint.add_url_rule(
+    '/auth/check',
+    view_func=check_auth,
     methods=['POST']
 )
 
