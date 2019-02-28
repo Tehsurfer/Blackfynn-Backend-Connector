@@ -181,7 +181,7 @@ class WelcomeAPI(MethodView):
     """
     Welcome Resource
     """
-    def post(self):
+    def get(self):
         # get auth token
         responseObject = {
                         'status': 'success',
@@ -221,5 +221,5 @@ auth_blueprint.add_url_rule(
 auth_blueprint.add_url_rule(
     '/',
     view_func=api_welcome_view,
-    methods=['get']
+    methods=['GET']
 )
