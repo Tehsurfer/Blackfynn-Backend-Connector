@@ -16,6 +16,8 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     registered_on = db.Column(db.DateTime, nullable=False)
     admin = db.Column(db.Boolean, nullable=False, default=False)
+    blackfynn_token = db.Column(db.String(255), nullable=True)
+    blackfynn_secret = db.Column(db.String(255), nullable=True)
 
     def __init__(self, email, password, admin=False):
         self.email = email
@@ -24,6 +26,7 @@ class User(db.Model):
         ).decode()
         self.registered_on = datetime.datetime.now()
         self.admin = admin
+    
 
     def encode_auth_token(self, user_id):
         """
