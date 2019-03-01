@@ -18,6 +18,7 @@ class User(db.Model):
     admin = db.Column(db.Boolean, nullable=False, default=False)
     blackfynn_token = db.Column(db.String(255), nullable=True)
     blackfynn_secret = db.Column(db.String(255), nullable=True)
+    blackfynn_session = db.Column(db.String(255), nullable=True)
 
     def __init__(self, email, password, admin=False):
         self.email = email
@@ -27,7 +28,8 @@ class User(db.Model):
         self.registered_on = datetime.datetime.now()
         self.admin = admin
         
-    def add_blackfynn_tokens(self, blackfynn_token, blackfynn_secret):
+    def add_blackfynn_tokens(self, blackfynn_session, blackfynn_token, blackfynn_secret):
+        self.blackfynn_session = blackfynn_session
         self.blackfynn_token = blackfynn_token
         self.blackfynn_secret = bcrypt.generate_password_hash(
             blackfynn_secret, app.config.get('BCRYPT_LOG_ROUNDS')
