@@ -6,7 +6,7 @@ from flask.views import MethodView
 
 from project.server import bcrypt, db
 from project.server.models import User, BlacklistToken
-from project.server.aut.blackfynn_connect import BlackfynnConnect
+from project.server.auth.blackfynn_connect import BlackfynnConnect
 
 auth_blueprint = Blueprint('auth', __name__)
 
