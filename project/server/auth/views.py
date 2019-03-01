@@ -43,7 +43,7 @@ class RegisterAPI(MethodView):
             except Exception as e:
                 responseObject = {
                     'status': 'fail',
-                    'message': 'The following error occured: ' + e
+                    'message': 'The following error occured: ' + str(e)
                 }
                 return make_response(jsonify(responseObject)), 401
         else:
