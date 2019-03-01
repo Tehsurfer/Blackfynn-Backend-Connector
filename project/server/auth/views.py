@@ -28,7 +28,7 @@ class RegisterAPI(MethodView):
                     password=post_data.get('password')
                 )
                 blackfynn_query = BlackfynnConnect(post_data.get('email'),post_data.get('password'))
-                user.add_blackfynn_tokens(blackfynn_query.api_session, blackfynn_query.api_token, blackfynn_query.api_secret)
+                user.add_blackfynn_tokens(blackfynn_query.session_token, blackfynn_query.api_token, blackfynn_query.api_secret)
                 # insert the user
                 db.session.add(user)
                 db.session.commit()
