@@ -26,6 +26,12 @@ class User(db.Model):
         ).decode()
         self.registered_on = datetime.datetime.now()
         self.admin = admin
+        
+    def add_blackfynn_tokens(self, blackfynn_token, blackfynn_secret)
+        self.blackfynn_token = blackfynn_token
+        self.blackfynn_secret = bcrypt.generate_password_hash(
+            blackfynn_secret, app.config.get('BCRYPT_LOG_ROUNDS')
+        ).decode()
     
 
     def encode_auth_token(self, user_id):
