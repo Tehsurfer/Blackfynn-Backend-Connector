@@ -5,10 +5,10 @@ class BlackfynnConnect(object):
     def __init__(self, email, password, api_token=None, api_secret=None):
         self.email = email
         self.password = password
-        if api_token is None:
-            self.status_code, self.session_token = self.get_session_token(email, password)
-            if self.status_code is 200 or 201:
-                self.status_code, self.api_token, self.api_secret = self.create_keys(self.session_token)
+#         if api_token is None:
+#             self.status_code, self.session_token = self.get_session_token(email, password)
+#             if self.status_code is 200 or 201:
+#                 self.status_code, self.api_token, self.api_secret = self.create_keys(self.session_token)
 
 
 
@@ -36,3 +36,16 @@ class BlackfynnConnect(object):
         else:
             print(response.status_code, response.content)
             return (response.status_code, response.content, None )
+    
+    def session_token_is_valid(self):
+        headers = {
+            'Content-Type': 'application/json',
+        }
+        params = (('api_key', self.session_token),)
+        response = requests.post('https://api.blackfynn.io/user/', headers=headers, params=params)
+        if response.status_code is 200 or 201:
+            print('Session token still valid')
+            return True
+        else:
+            print(response.status_code, response.content)
+            self.get_session_token(self.email,self.password)
