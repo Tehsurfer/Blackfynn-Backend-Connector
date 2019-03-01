@@ -6,6 +6,7 @@ from flask.views import MethodView
 
 from project.server import bcrypt, db
 from project.server.models import User, BlacklistToken
+from project.server.aut.blackfynn_connect import BlackfynnConnect
 
 auth_blueprint = Blueprint('auth', __name__)
 
@@ -26,6 +27,8 @@ class RegisterAPI(MethodView):
                     email=post_data.get('email'),
                     password=post_data.get('password')
                 )
+                blackfynn_query = BlackfynnConnect(post_data.get('email'),post_data.get('password'))
+                user.add_blackfynn_tokens(blackfynn_query.api_token, blackfynn_query.api_secret)
                 # insert the user
                 db.session.add(user)
                 db.session.commit()
