@@ -71,12 +71,21 @@ class LoginAPI(MethodView):
             ):
                 auth_token = user.encode_auth_token(user.id)
                 if auth_token:
-                    responseObject = {
+                    blackfynn_query = BlackfynnConnect(post_data.get('email'),post_data.get('password'), api_token=user.blackfynn_token, api_secret=user.blackfynn_secret)
+                    if blackfynn_query.session_token_is_valid():
+                        responseObject = {
                         'status': 'success',
                         'message': 'Successfully logged in.',
                         'auth_token': auth_token.decode()
-                    }
-                    return make_response(jsonify(responseObject)), 200
+                        }
+                        return make_response(jsonify(responseObject)), 200
+                    else: 
+                        responseObject = {
+                        'status': 'success',
+                        'message': 'Successfully logged in but error with Blackfynn.',
+                        'auth_token': auth_token.decode()
+                        }
+                        return make_response(jsonify(responseObject)), 401
             else:
                 responseObject = {
                     'status': 'fail',
@@ -87,7 +96,7 @@ class LoginAPI(MethodView):
             print(e)
             responseObject = {
                 'status': 'fail',
-                'message': 'Try again'
+                'message': 'Error: ' + str(e)
             }
             return make_response(jsonify(responseObject)), 500
 
