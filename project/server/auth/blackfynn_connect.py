@@ -2,12 +2,13 @@ import requests
 
 class BlackfynnConnect(object):
 
-    def __init__(self, email, password, api_token=None, api_secret=None):
+    def __init__(self, email, password, api_token=None, api_secret=None, session_token=None):
         self.email = email
         self.password = password
-        if api_token is None:
+        self.session_token = session_token
+        if session_token is None:
             self.status_code, self.session_token = self.get_session_token(email, password)
-            if self.status_code is 200 or 201:
+            if self.status_code is 200 or 201 and api_token is None:
                 self.status_code, self.api_token, self.api_secret = self.create_keys(self.session_token)
 
 
