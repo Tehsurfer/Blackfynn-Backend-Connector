@@ -71,7 +71,7 @@ class LoginAPI(MethodView):
             ):
                 auth_token = user.encode_auth_token(user.id)
                 if auth_token:
-                    blackfynn_query = BlackfynnConnect(post_data.get('email'),post_data.get('password'), api_token=user.blackfynn_token, api_secret=user.blackfynn_secret)
+                    blackfynn_query = BlackfynnConnect(post_data.get('email'),post_data.get('password'), api_token=user.blackfynn_token, api_secret=user.blackfynn_secret, session_token=user.blackfynn_session)
                     if blackfynn_query.session_token_is_valid():
                         responseObject = {
                         'status': 'success',
