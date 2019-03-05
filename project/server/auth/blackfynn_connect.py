@@ -31,7 +31,7 @@ class BlackfynnConnect(object):
         headers = {
             'Content-Type': 'application/json',
         }
-        params = ( ('api_key', '4bd923ad-924c-4dfc-b500-9ae9902802d8'), )
+        params = ( ('api_key', self.session_token))
         data = '{"name": "Auckland Biongineering Institute Apps Key"}'
         response = requests.post('https://api.blackfynn.io/token/', headers=headers, params=params, data=data)
         if response.status_code is 200 or 201:

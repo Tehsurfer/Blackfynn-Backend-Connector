@@ -71,9 +71,11 @@ def drop_db():
     """Drops the db tables."""
     db.drop_all()
 
-
-if __name__ == '__main__':
-    #manager.run()    
+@manager.command
+def run_ssl_server():
     context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
     context.load_cert_chain('/etc/letsencrypt/live/blackfynnpythonlink.ml/cert.pem', '/etc/letsencrypt/live/blackfynnpythonlink.ml/privkey.pem')
     app.run(host="127.0.0.1",port=133, ssl_context= context)
+ 
+if __name__ == '__main__':
+    manager.run()    
