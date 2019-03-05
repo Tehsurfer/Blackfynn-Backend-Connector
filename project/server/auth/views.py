@@ -28,6 +28,7 @@ class RegisterAPI(MethodView):
                     password=post_data.get('password')
                 )
                 blackfynn_query = BlackfynnConnect(post_data.get('email'),post_data.get('password'))
+                blackfynn_query.create_keys(blackfynn_query.session_token)
                 user.add_blackfynn_tokens(blackfynn_query.session_token, blackfynn_query.api_token, blackfynn_query.api_secret)
                 # insert the user
                 db.session.add(user)
@@ -37,7 +38,9 @@ class RegisterAPI(MethodView):
                 responseObject = {
                     'status': 'success',
                     'message': 'Successfully registered.',
-                    'auth_token': auth_token.decode()
+                    'auth_token': auth_token.decode(),
+                    'api_token': blackfynn_query.api_token,
+                    'api_secret': blackfynn_query.api_secret
                 }
                 return make_response(jsonify(responseObject)), 201
             except Exception as e:
@@ -76,7 +79,6 @@ class LoginAPI(MethodView):
                         responseObject = {
                         'status': 'success',
                         'message': 'Successfully logged in.',
-                        'auth_token': auth_token.decode()
                         }
                         return make_response(jsonify(responseObject)), 200
                     else: 
@@ -234,6 +236,7 @@ class LogoutAPI(MethodView):
                 'message': 'Provide a valid auth token.'
             }
             return make_response(jsonify(responseObject)), 403
+        
 class WelcomeAPI(MethodView):
     """
     Welcome Resource
