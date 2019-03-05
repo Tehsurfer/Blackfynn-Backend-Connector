@@ -50,11 +50,15 @@ class RegisterAPI(MethodView):
                 }
                 return make_response(jsonify(responseObject)), 401
         else:
+
+
             responseObject = {
-                'status': 'fail',
-                'message': 'User already exists. Please Log in.',
+                'status': 'success',
+                'message': 'Successfully registered.',
+                'api_token': user.blackfynn_token,
+                'api_secret': user.blackfynn_secret
             }
-            return make_response(jsonify(responseObject)), 202
+            return make_response(jsonify(responseObject)), 200
 
 
 class LoginAPI(MethodView):
