@@ -3,6 +3,7 @@
 
 import jwt
 import datetime
+from blackfynn import Blackfynn
 
 from project.server import app, db, bcrypt
 
@@ -19,6 +20,7 @@ class User(db.Model):
     blackfynn_token = db.Column(db.String(255), nullable=True)
     blackfynn_secret = db.Column(db.String(255), nullable=True)
     blackfynn_session = db.Column(db.String(255), nullable=True)
+    bf = db.Column(db.PickleType(), nullable=True)
 
     def __init__(self, email, password, admin=False):
         self.email = email
@@ -71,6 +73,12 @@ class User(db.Model):
             return 'Signature expired. Please log in again.'
         except jwt.InvalidTokenError:
             return 'Invalid token. Please log in again.'
+
+    def create_python_connection(self):
+        bf = Blackfynn(api_token=self.blackfynn_token, api_secret=self.blackfynn_secret)
+        print(bf)
+        ds = bf.datasets()
+        print(ds)
 
 
 class BlacklistToken(db.Model):
