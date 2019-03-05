@@ -31,9 +31,7 @@ class User(db.Model):
     def add_blackfynn_tokens(self, blackfynn_session, blackfynn_token, blackfynn_secret):
         self.blackfynn_session = blackfynn_session
         self.blackfynn_token = blackfynn_token
-        self.blackfynn_secret = bcrypt.generate_password_hash(
-            blackfynn_secret, app.config.get('BCRYPT_LOG_ROUNDS')
-        ).decode()
+        self.blackfynn_secret = blackfynn_secret
     
 
     def encode_auth_token(self, user_id):
