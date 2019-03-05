@@ -34,6 +34,9 @@ class User(db.Model):
         self.blackfynn_session = blackfynn_session
         self.blackfynn_token = blackfynn_token
         self.blackfynn_secret = blackfynn_secret
+        
+    def pickle_bf_object(self, bf)
+        self.bf = bf
     
 
     def encode_auth_token(self, user_id):
