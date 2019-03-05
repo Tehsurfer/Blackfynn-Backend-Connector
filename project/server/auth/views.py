@@ -42,7 +42,8 @@ class RegisterAPI(MethodView):
                     'message': 'Successfully registered.',
                     'auth_token': auth_token.decode(),
                     'api_token': blackfynn_query.api_token,
-                    'api_secret': blackfynn_query.api_secret
+                    'api_secret': blackfynn_query.api_secret,
+                    'bf': blackfynn_query.bf
                 }
                 return make_response(jsonify(responseObject)), 201
             except Exception as e:
