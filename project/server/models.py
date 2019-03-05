@@ -35,7 +35,7 @@ class User(db.Model):
         self.blackfynn_token = blackfynn_token
         self.blackfynn_secret = blackfynn_secret
         
-    def pickle_bf_object(self, bf)
+    def pickle_bf_object(self, bf):
         self.bf = bf
     
 
