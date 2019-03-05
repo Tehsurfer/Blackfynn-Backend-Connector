@@ -73,7 +73,7 @@ class BlackfynnConnect(object):
             print(response.status_code, response.content)
             return (response.status_code, response.content, None )
         
-    def create_python_conection(self):
+    def create_python_connection(self):
         self.bf = Blackfynn(api_token=self.api_token,api_secret=self.api_secret)
         
 
