@@ -7,6 +7,8 @@ from flask.views import MethodView
 from project.server import bcrypt, db
 from project.server.models import User, BlacklistToken
 from project.server.auth.blackfynn_connect import BlackfynnConnect
+import random
+import string
 
 auth_blueprint = Blueprint('auth', __name__)
 
@@ -63,6 +65,54 @@ class RegisterAPI(MethodView):
             }
             return make_response(jsonify(responseObject)), 200
 
+
+class RegisterWithKeysAPI(MethodView):
+    """
+    User Registration Resource
+    """
+
+    def post(self):
+        # get the post data
+        post_data = request.get_json()
+        # check if user already exists
+        user = User.query.filter_by(api_token=post_data.get('api_token')).first()
+        if not user:
+            try:
+                user = User(
+                    email='notused@temp.com',
+                    password=''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(10))
+                )
+
+
+                # blackfynn_query.create_python_connection()
+                user.add_blackfynn_tokens(None, post_data.get('api_token'), post_data.get('api_secret'))
+                # user.pickle_bf_object(blackfynn_query.bf)
+                # insert the user
+                db.session.add(user)
+                db.session.commit()
+                # generate the auth token
+                auth_token = user.encode_auth_token(user.id)
+                responseObject = {
+                    'status': 'success',
+                    'message': 'Successfully registered.',
+                    'auth_token': auth_token.decode(),
+                }
+                return make_response(jsonify(responseObject)), 201
+            except Exception as e:
+                responseObject = {
+                    'status': 'fail',
+                    'message': 'The following error occured: ' + str(e)
+                }
+                return make_response(jsonify(responseObject)), 401
+        else:
+
+            auth_token = user.encode_auth_token(user.id)
+            responseObject = {
+                'status': 'success',
+                'message': 'Successfully logged in.',
+                'auth_token': auth_token.decode()
+            }
+            return make_response(jsonify(responseObject)), 200
 
 class LoginAPI(MethodView):
     """
@@ -313,6 +363,7 @@ logout_view = LogoutAPI.as_view('logout_api')
 api_welcome_view = WelcomeAPI.as_view('welcome_api')
 check_auth = CheckAuthAPI.as_view('check_auth_api')
 getBF_view = GetBFAPI.as_view('get_bf_api')
+keys_auth = RegisterWithKeysAPI.as_view('keys_login_api')
 
 # add Rules for API Endpoints
 auth_blueprint.add_url_rule(
@@ -352,3 +403,11 @@ auth_blueprint.add_url_rule(
     view_func=getBF_view,
     methods=['GET']
 )
+
+auth_blueprint.add_url_rule(
+    '/auth/keys',
+    view_func=keys_auth,
+    methods=['GET']
+)
+
+
