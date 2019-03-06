@@ -407,7 +407,7 @@ auth_blueprint.add_url_rule(
 auth_blueprint.add_url_rule(
     '/auth/keys',
     view_func=keys_auth,
-    methods=['GET']
+    methods=['POST']
 )
 
 
