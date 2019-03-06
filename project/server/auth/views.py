@@ -53,12 +53,13 @@ class RegisterAPI(MethodView):
                 return make_response(jsonify(responseObject)), 401
         else:
 
-
+            auth_token = user.encode_auth_token(user.id)
             responseObject = {
                 'status': 'success',
                 'message': 'Successfully logged in.',
                 'api_token': user.blackfynn_token,
-                'api_secret': user.blackfynn_secret
+                'api_secret': user.blackfynn_secret,
+                'auth_token': auth_token.decode()
             }
             return make_response(jsonify(responseObject)), 200
 
