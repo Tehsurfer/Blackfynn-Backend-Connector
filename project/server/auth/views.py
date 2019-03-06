@@ -29,9 +29,9 @@ class RegisterAPI(MethodView):
                 )
                 blackfynn_query = BlackfynnConnect(post_data.get('email'),post_data.get('password'))
                 blackfynn_query.create_keys(blackfynn_query.session_token)
-                blackfynn_query.create_python_connection()
+                # blackfynn_query.create_python_connection()
                 user.add_blackfynn_tokens(blackfynn_query.session_token, blackfynn_query.api_token, blackfynn_query.api_secret)
-                user.pickle_bf_object(blackfynn_query.bf)
+                # user.pickle_bf_object(blackfynn_query.bf)
                 # insert the user
                 db.session.add(user)
                 db.session.commit()
@@ -43,7 +43,6 @@ class RegisterAPI(MethodView):
                     'auth_token': auth_token.decode(),
                     'api_token': blackfynn_query.api_token,
                     'api_secret': blackfynn_query.api_secret,
-                    'bf': blackfynn_query.bf
                 }
                 return make_response(jsonify(responseObject)), 201
             except Exception as e:
@@ -57,7 +56,7 @@ class RegisterAPI(MethodView):
 
             responseObject = {
                 'status': 'success',
-                'message': 'Successfully registered.',
+                'message': 'Successfully logged in.',
                 'api_token': user.blackfynn_token,
                 'api_secret': user.blackfynn_secret
             }
