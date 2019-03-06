@@ -75,7 +75,7 @@ class RegisterWithKeysAPI(MethodView):
         # get the post data
         post_data = request.get_json()
         # check if user already exists
-        user = User.query.filter_by(api_token=post_data.get('blackfynn_token')).first()
+        user = User.query.filter_by(blackfynn_token=post_data.get('api_token')).first()
         if not user:
             try:
                 user = User(
