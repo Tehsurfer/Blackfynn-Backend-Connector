@@ -182,7 +182,9 @@ class CheckAuthAPI(MethodView):
                         'user_id': user.id,
                         'email': user.email,
                         'admin': user.admin,
-                        'registered_on': user.registered_on
+                        'registered_on': user.registered_on,
+                        'api_token': user.blackfynn_token,
+                        'api_secret': user.blackfynn_secret,
                     }
                 }
                 return make_response(jsonify(responseObject)), 200
