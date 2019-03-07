@@ -79,7 +79,7 @@ class RegisterWithKeysAPI(MethodView):
         if not user:
             try:
                 user = User(
-                    email='notused@temp.com',
+                    email=''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(10)) + 'notused@temp.com',
                     password=''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(10))
                 )
 
