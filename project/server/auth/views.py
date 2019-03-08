@@ -6,6 +6,9 @@ from flask.views import MethodView
 
 from project.server import bcrypt, db
 from project.server.models import User, BlacklistToken
+from project.server.auth.blackfynn_connect import BlackfynnConnect
+import random
+import string
 
 auth_blueprint = Blueprint('auth', __name__)
 
@@ -26,6 +29,11 @@ class RegisterAPI(MethodView):
                     email=post_data.get('email'),
                     password=post_data.get('password')
                 )
+                blackfynn_query = BlackfynnConnect(post_data.get('email'),post_data.get('password'))
+                blackfynn_query.create_keys(blackfynn_query.session_token)
+                # blackfynn_query.create_python_connection()
+                user.add_blackfynn_tokens(blackfynn_query.session_token, blackfynn_query.api_token, blackfynn_query.api_secret)
+                # user.pickle_bf_object(blackfynn_query.bf)
                 # insert the user
                 db.session.add(user)
                 db.session.commit()
@@ -34,22 +42,77 @@ class RegisterAPI(MethodView):
                 responseObject = {
                     'status': 'success',
                     'message': 'Successfully registered.',
-                    'auth_token': auth_token.decode()
+                    'auth_token': auth_token.decode(),
+                    'api_token': blackfynn_query.api_token,
+                    'api_secret': blackfynn_query.api_secret,
                 }
                 return make_response(jsonify(responseObject)), 201
             except Exception as e:
                 responseObject = {
                     'status': 'fail',
-                    'message': 'Some error occurred. Please try again.'
+                    'message': 'The following error occured: ' + str(e)
                 }
                 return make_response(jsonify(responseObject)), 401
         else:
-            responseObject = {
-                'status': 'fail',
-                'message': 'User already exists. Please Log in.',
-            }
-            return make_response(jsonify(responseObject)), 202
 
+            auth_token = user.encode_auth_token(user.id)
+            responseObject = {
+                'status': 'success',
+                'message': 'Successfully logged in.',
+                'api_token': user.blackfynn_token,
+                'api_secret': user.blackfynn_secret,
+                'auth_token': auth_token.decode()
+            }
+            return make_response(jsonify(responseObject)), 200
+
+
+class RegisterWithKeysAPI(MethodView):
+    """
+    User Registration Resource
+    """
+
+    def post(self):
+        # get the post data
+        post_data = request.get_json()
+        # check if user already exists
+        user = User.query.filter_by(blackfynn_token=post_data.get('api_token')).first()
+        if not user:
+            try:
+                user = User(
+                    email=''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(10)) + 'notused@temp.com',
+                    password=''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(10))
+                )
+
+
+                # blackfynn_query.create_python_connection()
+                user.add_blackfynn_tokens(None, post_data.get('api_token'), post_data.get('api_secret'))
+                # user.pickle_bf_object(blackfynn_query.bf)
+                # insert the user
+                db.session.add(user)
+                db.session.commit()
+                # generate the auth token
+                auth_token = user.encode_auth_token(user.id)
+                responseObject = {
+                    'status': 'success',
+                    'message': 'Successfully registered.',
+                    'auth_token': auth_token.decode(),
+                }
+                return make_response(jsonify(responseObject)), 201
+            except Exception as e:
+                responseObject = {
+                    'status': 'fail',
+                    'message': 'The following error occured: ' + str(e)
+                }
+                return make_response(jsonify(responseObject)), 401
+        else:
+
+            auth_token = user.encode_auth_token(user.id)
+            responseObject = {
+                'status': 'success',
+                'message': 'Successfully logged in.',
+                'auth_token': auth_token.decode()
+            }
+            return make_response(jsonify(responseObject)), 200
 
 class LoginAPI(MethodView):
     """
@@ -68,12 +131,20 @@ class LoginAPI(MethodView):
             ):
                 auth_token = user.encode_auth_token(user.id)
                 if auth_token:
-                    responseObject = {
+                    blackfynn_query = BlackfynnConnect(post_data.get('email'),post_data.get('password'), api_token=user.blackfynn_token, api_secret=user.blackfynn_secret, session_token=user.blackfynn_session)
+                    if blackfynn_query.session_token_is_valid():
+                        responseObject = {
                         'status': 'success',
                         'message': 'Successfully logged in.',
+                        }
+                        return make_response(jsonify(responseObject)), 200
+                    else: 
+                        responseObject = {
+                        'status': 'success',
+                        'message': 'Successfully logged in but error with Blackfynn.',
                         'auth_token': auth_token.decode()
-                    }
-                    return make_response(jsonify(responseObject)), 200
+                        }
+                        return make_response(jsonify(responseObject)), 401
             else:
                 responseObject = {
                     'status': 'fail',
@@ -84,7 +155,7 @@ class LoginAPI(MethodView):
             print(e)
             responseObject = {
                 'status': 'fail',
-                'message': 'Try again'
+                'message': 'Error: ' + str(e)
             }
             return make_response(jsonify(responseObject)), 500
 
@@ -132,13 +203,60 @@ class UserAPI(MethodView):
                 'message': 'Provide a valid auth token.'
             }
             return make_response(jsonify(responseObject)), 401
+        
+class CheckAuthAPI(MethodView):
+    """
+    User Resource
+    """
+    def post(self):
+        # get the auth token
+        post_data = request.get_json()
+        if post_data.get('Authorization'):
+            try:
+                auth_token = post_data.get('Authorization').split(" ")[1]
+            except IndexError:
+                responseObject = {
+                    'status': 'fail',
+                    'message': 'Bearer token malformed.'
+                }
+                return make_response(jsonify(responseObject)), 401
+        else:
+            auth_token = ''
+        if auth_token:
+            resp = User.decode_auth_token(auth_token)
+            if not isinstance(resp, str):
+                user = User.query.filter_by(id=resp).first()
+                responseObject = {
+                    'status': 'success',
+                    'data': {
+                        'user_id': user.id,
+                        'email': user.email,
+                        'admin': user.admin,
+                        'registered_on': user.registered_on,
+                        'api_token': user.blackfynn_token,
+                        'api_secret': user.blackfynn_secret,
+                    }
+                }
+                return make_response(jsonify(responseObject)), 200
+            responseObject = {
+                'status': 'fail',
+                'message': resp
+            }
+            return make_response(jsonify(responseObject)), 401
+        else:
+            responseObject = {
+                'status': 'fail',
+                'message': 'Provide a valid auth token.'
+            }
+            return make_response(jsonify(responseObject)), 401
+
 
 
 class LogoutAPI(MethodView):
     """
     Logout Resource
     """
-    def post(self):
+    def get(self):
         # get auth token
         auth_header = request.headers.get('Authorization')
         if auth_header:
@@ -177,12 +295,75 @@ class LogoutAPI(MethodView):
                 'message': 'Provide a valid auth token.'
             }
             return make_response(jsonify(responseObject)), 403
+        
+class WelcomeAPI(MethodView):
+    """
+    Welcome Resource
+    """
+    def get(self):
+        # get auth token
+        responseObject = {
+                        'status': 'success',
+                        'message': 'API is currently up. Check out https://github.com/Tehsurfer/Blackfynn-Backend-Connector/ for more details.'
+                    }
+        return make_response(jsonify(responseObject)), 200
+
+class GetBFAPI(MethodView):
+
+    def get(self):
+        # get the auth token
+        auth_header = request.headers.get('Authorization')
+        if auth_header:
+            try:
+                auth_token = auth_header.split(" ")[1]
+            except IndexError:
+                responseObject = {
+                    'status': 'fail',
+                    'message': 'Bearer token malformed.'
+                }
+                return make_response(jsonify(responseObject)), 401
+        else:
+            auth_token = ''
+        if auth_token:
+            resp = User.decode_auth_token(auth_token)
+            if not isinstance(resp, str):
+                user = User.query.filter_by(id=resp).first()
+                responseObject = {
+                    'status': 'success',
+                    'data': {
+                        'user_id': user.id,
+                        'email': user.email,
+                        'admin': user.admin,
+                        'registered_on': user.registered_on,
+                        'blackfynn_obj': user.bf
+                    }
+                }
+                return make_response(jsonify(responseObject)), 200
+            responseObject = {
+                'status': 'fail',
+                'message': resp
+            }
+            return make_response(jsonify(responseObject)), 401
+        else:
+            responseObject = {
+                'status': 'fail',
+                'message': 'Provide a valid auth token.'
+            }
+            return make_response(jsonify(responseObject)), 401
+
+
+
+
 
 # define the API resources
 registration_view = RegisterAPI.as_view('register_api')
 login_view = LoginAPI.as_view('login_api')
 user_view = UserAPI.as_view('user_api')
 logout_view = LogoutAPI.as_view('logout_api')
+api_welcome_view = WelcomeAPI.as_view('welcome_api')
+check_auth = CheckAuthAPI.as_view('check_auth_api')
+getBF_view = GetBFAPI.as_view('get_bf_api')
+keys_auth = RegisterWithKeysAPI.as_view('keys_login_api')
 
 # add Rules for API Endpoints
 auth_blueprint.add_url_rule(
@@ -205,3 +386,28 @@ auth_blueprint.add_url_rule(
     view_func=logout_view,
     methods=['POST']
 )
+auth_blueprint.add_url_rule(
+    '/auth/check',
+    view_func=check_auth,
+    methods=['POST']
+)
+
+auth_blueprint.add_url_rule(
+    '/',
+    view_func=api_welcome_view,
+    methods=['GET']
+)
+
+auth_blueprint.add_url_rule(
+    '/bf',
+    view_func=getBF_view,
+    methods=['GET']
+)
+
+auth_blueprint.add_url_rule(
+    '/auth/keys',
+    view_func=keys_auth,
+    methods=['POST']
+)
+
+

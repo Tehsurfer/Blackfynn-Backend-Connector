@@ -3,6 +3,7 @@
 
 import jwt
 import datetime
+from blackfynn import Blackfynn
 
 from project.server import app, db, bcrypt
 
@@ -12,10 +13,14 @@ class User(db.Model):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    email = db.Column(db.String(255), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False)
+    email = db.Column(db.String(255), unique=True, nullable=True)
+    password = db.Column(db.String(255), nullable=True)
     registered_on = db.Column(db.DateTime, nullable=False)
     admin = db.Column(db.Boolean, nullable=False, default=False)
+    blackfynn_token = db.Column(db.String(255), nullable=True)
+    blackfynn_secret = db.Column(db.String(255), nullable=True)
+    blackfynn_session = db.Column(db.String(255), nullable=True)
+    bf = db.Column(db.PickleType(), nullable=True)
 
     def __init__(self, email, password, admin=False):
         self.email = email
@@ -24,6 +29,15 @@ class User(db.Model):
         ).decode()
         self.registered_on = datetime.datetime.now()
         self.admin = admin
+        
+    def add_blackfynn_tokens(self, blackfynn_session, blackfynn_token, blackfynn_secret):
+        self.blackfynn_session = blackfynn_session
+        self.blackfynn_token = blackfynn_token
+        self.blackfynn_secret = blackfynn_secret
+        
+    def pickle_bf_object(self, bf):
+        self.bf = bf
+    
 
     def encode_auth_token(self, user_id):
         """
@@ -32,7 +46,7 @@ class User(db.Model):
         """
         try:
             payload = {
-                'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, seconds=5),
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(days=2, seconds=5),
                 'iat': datetime.datetime.utcnow(),
                 'sub': user_id
             }
@@ -53,15 +67,21 @@ class User(db.Model):
         """
         try:
             payload = jwt.decode(auth_token, app.config.get('SECRET_KEY'))
-            is_blacklisted_token = BlacklistToken.check_blacklist(auth_token)
-            if is_blacklisted_token:
-                return 'Token blacklisted. Please log in again.'
-            else:
-                return payload['sub']
+            #is_blacklisted_token = BlacklistToken.check_blacklist(auth_token)
+            #if is_blacklisted_token:
+            #    return 'Token blacklisted. Please log in again.'
+            #else:
+            return payload['sub']
         except jwt.ExpiredSignatureError:
             return 'Signature expired. Please log in again.'
         except jwt.InvalidTokenError:
             return 'Invalid token. Please log in again.'
+
+    def create_python_connection(self):
+        bf = Blackfynn(api_token=self.blackfynn_token, api_secret=self.blackfynn_secret)
+        print(bf)
+        ds = bf.datasets()
+        print(ds)
 
 
 class BlacklistToken(db.Model):
