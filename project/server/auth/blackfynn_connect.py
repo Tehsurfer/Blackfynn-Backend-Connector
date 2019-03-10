@@ -1,6 +1,5 @@
 import requests
 import json
-from blackfynn import Blackfynn
 
 class BlackfynnConnect(object):
 
