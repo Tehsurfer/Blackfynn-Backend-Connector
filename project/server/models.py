@@ -3,7 +3,6 @@
 
 import jwt
 import datetime
-from blackfynn import Blackfynn
 
 from project.server import app, db, bcrypt
 
@@ -76,13 +75,6 @@ class User(db.Model):
             return 'Signature expired. Please log in again.'
         except jwt.InvalidTokenError:
             return 'Invalid token. Please log in again.'
-
-    def create_python_connection(self):
-        bf = Blackfynn(api_token=self.blackfynn_token, api_secret=self.blackfynn_secret)
-        print(bf)
-        ds = bf.datasets()
-        print(ds)
-
 
 class BlacklistToken(db.Model):
     """
